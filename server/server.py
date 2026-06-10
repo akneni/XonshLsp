@@ -157,13 +157,31 @@ class XonshLanguageServer:
 
     def _set_document(self, uri: str, version: int, text: str) -> Document:
         python_uri = self._python_uri(uri)
+        lowering_diagnostics: list[Json] = []
+        try:
+            lowering = lower_xonsh(text, uri)
+        except Exception as error:
+            lowering = LoweringResult(text, frozenset())
+            lowering_diagnostics.append(
+                {
+                    "range": {
+                        "start": {"line": 0, "character": 0},
+                        "end": {"line": 0, "character": 1},
+                    },
+                    "severity": 2,
+                    "source": "xonsh-lsp",
+                    "message": f"Lowering failed; using source unchanged: {error}",
+                }
+            )
         document = Document(
             uri=uri,
             python_uri=python_uri,
             version=version,
             text=text,
-            lowering=lower_xonsh(text, uri),
-            xonsh_diagnostics=self._xonsh_diagnostics(text, uri),
+            lowering=lowering,
+            xonsh_diagnostics=(
+                lowering_diagnostics + self._xonsh_diagnostics(text, uri)
+            ),
         )
         previous = self.documents.get(uri)
         if previous:

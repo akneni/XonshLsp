@@ -33,21 +33,28 @@ def _xonsh_command_lines(source: str, filename: str) -> set[int]:
     except Exception:
         return set()
 
-    command_lines: set[int] = set()
-    if tree is None:
-        return command_lines
+    try:
+        command_lines: set[int] = set()
+        if tree is None:
+            return command_lines
 
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Expr) or not isinstance(node.value, ast.Call):
-            continue
-        func = node.value.func
-        if not isinstance(func, ast.Attribute):
-            continue
-        if func.attr.startswith(_SUBPROC_METHOD_PREFIXES):
-            start = max(0, node.lineno - 1)
-            end = max(start, getattr(node, "end_lineno", node.lineno) - 1)
-            command_lines.update(range(start, end + 1))
-    return command_lines
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Expr) or not isinstance(node.value, ast.Call):
+                continue
+            func = node.value.func
+            if not isinstance(func, ast.Attribute):
+                continue
+            if func.attr.startswith(_SUBPROC_METHOD_PREFIXES):
+                lineno = getattr(node, "lineno", None) or 1
+                end_lineno = getattr(node, "end_lineno", None) or lineno
+                start = max(0, lineno - 1)
+                end = max(start, end_lineno - 1)
+                command_lines.update(range(start, end + 1))
+        return command_lines
+    except Exception:
+        # Xonsh may return partially populated AST nodes for incomplete editor
+        # input. Heuristic command detection is preferable to crashing the LSP.
+        return set()
 
 
 def _looks_like_command(line: str) -> bool:

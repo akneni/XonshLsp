@@ -2,7 +2,7 @@
   "name": "xonsh-language-support",
   "displayName": "Xonsh Language Support",
   "description": "Xonsh language support powered by Xonsh and Pyright.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "xonsh-lsp",
   "license": "MIT",
   "engines": {

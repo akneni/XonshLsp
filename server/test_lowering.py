@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import ast
 import unittest
+from unittest.mock import patch
 
-from server.lowering import lower_xonsh
+from server.lowering import _xonsh_command_lines, lower_xonsh
 
 
 class LoweringTests(unittest.TestCase):
@@ -39,6 +40,31 @@ class LoweringTests(unittest.TestCase):
         lowered = self.assert_valid_lowering(source)
         self.assertIn("    pass;", lowered)
         self.assertEqual(source.index("name.upper()"), lowered.index("name.upper()"))
+
+    def test_missing_end_lineno_does_not_crash(self) -> None:
+        command = ast.Expr(
+            value=ast.Call(
+                func=ast.Attribute(
+                    value=ast.Name(id="__xonsh__", ctx=ast.Load()),
+                    attr="subproc_captured_hiddenobject",
+                    ctx=ast.Load(),
+                ),
+                args=[],
+                keywords=[],
+            )
+        )
+        command.lineno = 3
+        command.end_lineno = None
+
+        class FakeExecer:
+            def __init__(self, **_: object) -> None:
+                pass
+
+            def parse(self, *_: object, **__: object) -> ast.Module:
+                return ast.Module(body=[command], type_ignores=[])
+
+        with patch("xonsh.execer.Execer", FakeExecer):
+            self.assertEqual(_xonsh_command_lines("echo hi\n", "test.xsh"), {2})
 
 
 if __name__ == "__main__":

@@ -26,3 +26,5 @@ npx vsce package --allow-missing-repository --out "$root/xonsh-language-support.
 or exit $status
 
 echo "Built $root/xonsh-language-support.vsix"
+
+code --install-extension /home/aknen/Workspace/XonshLsp/xonsh-language-support.vsix --force

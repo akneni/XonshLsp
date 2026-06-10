@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Prevent incomplete Xonsh AST location metadata from crashing the language
+  server during edits.
+- Fall back safely if lowering encounters unexpected parser output.
+
 ## 0.1.0
 
 - Initial Xonsh language registration and syntax grammar.
