@@ -1,0 +1,143 @@
+{
+  "name": "xonsh-language-support",
+  "displayName": "Xonsh Language Support",
+  "description": "Xonsh language support powered by Xonsh and Pyright.",
+  "version": "0.1.0",
+  "publisher": "xonsh-lsp",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "keywords": [
+    "xonsh",
+    "xsh",
+    "python",
+    "shell",
+    "language server"
+  ],
+  "activationEvents": [
+    "onLanguage:xonsh"
+  ],
+  "main": "./dist/extension.js",
+  "files": [
+    "dist",
+    "server/__init__.py",
+    "server/lowering.py",
+    "server/server.py",
+    "server/README.md",
+    "syntaxes",
+    "pyright",
+    "language-configuration.json",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "rm -rf dist",
+    "compile": "tsc --noEmit && esbuild extension/src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
+    "prepare:pyright": "node scripts/prepare-pyright.mjs",
+    "test:server": "python -m unittest -v server/test_lowering.py",
+    "test": "npm run compile && npm run test:server",
+    "package": "npm run prepare:pyright && vsce package --allow-missing-repository --out xonsh-language-support.vsix"
+  },
+  "dependencies": {
+    "pyright": "1.1.410"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/vscode": "^1.95.0",
+    "@vscode/vsce": "3.9.2",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.8.0",
+    "vscode-languageclient": "10.0.0"
+  },
+  "contributes": {
+    "languages": [
+      {
+        "id": "xonsh",
+        "aliases": [
+          "Xonsh",
+          "xonsh"
+        ],
+        "extensions": [
+          ".xsh"
+        ],
+        "filenames": [
+          ".xonshrc",
+          "xonshrc"
+        ],
+        "firstLine": "^#!.*\\b(xonsh|xsh)\\b",
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "xonsh",
+        "scopeName": "source.xonsh",
+        "path": "./syntaxes/xonsh.tmLanguage.json",
+        "embeddedLanguages": {
+          "meta.embedded.python.xonsh": "python"
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "xonsh.runFile",
+        "title": "Xonsh: Run File"
+      },
+      {
+        "command": "xonsh.runSelection",
+        "title": "Xonsh: Run Selection"
+      },
+      {
+        "command": "xonsh.restartLanguageServer",
+        "title": "Xonsh: Restart Language Server"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "xonsh.runFile",
+          "when": "editorLangId == xonsh",
+          "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "xonsh.runSelection",
+          "when": "editorLangId == xonsh && editorHasSelection",
+          "group": "1_modification"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Xonsh",
+      "properties": {
+        "xonsh.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Python interpreter used to launch the language server. It must have Xonsh installed."
+        },
+        "xonsh.executablePath": {
+          "type": "string",
+          "default": "xonsh",
+          "description": "Xonsh executable used by Run File and Run Selection."
+        },
+        "xonsh.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace communication between VS Code and the Xonsh language server."
+        }
+      }
+    }
+  }
+}

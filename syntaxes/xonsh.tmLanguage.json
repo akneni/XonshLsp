@@ -1,0 +1,87 @@
+{
+  "name": "Xonsh",
+  "scopeName": "source.xonsh",
+  "patterns": [
+    {
+      "include": "#xonsh"
+    },
+    {
+      "include": "source.python"
+    }
+  ],
+  "repository": {
+    "xonsh": {
+      "patterns": [
+        {
+          "name": "variable.other.environment.xonsh",
+          "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
+        },
+        {
+          "name": "string.regexp.xonsh",
+          "begin": "(?<![A-Za-z0-9_])(?:[prg]|rp|pg|gp)?`",
+          "end": "`",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.xonsh"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.xonsh"
+            }
+          }
+        },
+        {
+          "name": "meta.subprocess.xonsh",
+          "begin": "(\\$|!)(\\(|\\[)",
+          "end": "(\\)|\\])",
+          "beginCaptures": {
+            "1": {
+              "name": "keyword.operator.subprocess.xonsh"
+            },
+            "2": {
+              "name": "punctuation.section.subprocess.begin.xonsh"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.section.subprocess.end.xonsh"
+            }
+          },
+          "patterns": [
+            {
+              "include": "#xonsh"
+            },
+            {
+              "include": "source.python"
+            }
+          ]
+        },
+        {
+          "name": "meta.embedded.python.xonsh",
+          "begin": "@\\(",
+          "end": "\\)",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.section.embedded.begin.xonsh"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.section.embedded.end.xonsh"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.python"
+            }
+          ]
+        },
+        {
+          "name": "keyword.operator.shell.xonsh",
+          "match": "(?<!\\|)\\|(?:&|\\|)?|&&|(?<!>)>>?|(?<!<)<"
+        }
+      ]
+    }
+  }
+}
