@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Add semantic highlighting for Python modules, classes, functions, parameters,
+  variables, methods, properties, and decorators in Xonsh files.
+
 ## 0.1.1
 
 - Prevent incomplete Xonsh AST location metadata from crashing the language

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, BinaryIO
 
 from lowering import LoweringResult, lower_xonsh
+from semantics import TOKEN_MODIFIERS, TOKEN_TYPES, semantic_tokens
 
 
 Json = dict[str, Any]
@@ -306,6 +307,16 @@ class XonshLanguageServer:
         if method == "textDocument/didClose":
             self._close_document(message["params"])
             return
+        if method == "textDocument/semanticTokens/full":
+            uri = message["params"]["textDocument"]["uri"]
+            document = self.documents.get(uri)
+            result = (
+                semantic_tokens(document.text, document.lowering.source)
+                if document
+                else {"data": []}
+            )
+            self.client.write({"jsonrpc": "2.0", "id": message_id, "result": result})
+            return
         if method == "exit":
             self.pyright.write(message)
             self.running = False
@@ -321,7 +332,7 @@ class XonshLanguageServer:
             if method == "initialize":
                 forwarded["params"]["clientInfo"] = {
                     "name": "xonsh-lsp",
-                    "version": "0.1.0",
+                    "version": "0.1.2",
                 }
             self.pyright.write(forwarded)
             return
@@ -358,6 +369,14 @@ class XonshLanguageServer:
                 "openClose": True,
                 "change": 1,
                 "save": {"includeText": True},
+            }
+            capabilities["semanticTokensProvider"] = {
+                "legend": {
+                    "tokenTypes": TOKEN_TYPES,
+                    "tokenModifiers": TOKEN_MODIFIERS,
+                },
+                "full": True,
+                "range": False,
             }
         elif pending_method == "textDocument/completion" and "result" in message:
             uri = self.pending_completion_uris.pop(message_id, "")

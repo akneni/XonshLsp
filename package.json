@@ -2,7 +2,7 @@
   "name": "xonsh-language-support",
   "displayName": "Xonsh Language Support",
   "description": "Xonsh language support powered by Xonsh and Pyright.",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "xonsh-lsp",
   "license": "MIT",
   "engines": {
@@ -27,6 +27,7 @@
     "dist",
     "server/__init__.py",
     "server/lowering.py",
+    "server/semantics.py",
     "server/server.py",
     "server/README.md",
     "syntaxes",
@@ -40,7 +41,7 @@
     "clean": "rm -rf dist",
     "compile": "tsc --noEmit && esbuild extension/src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
     "prepare:pyright": "node scripts/prepare-pyright.mjs",
-    "test:server": "python -m unittest -v server/test_lowering.py",
+    "test:server": "python -m unittest -v server/test_lowering.py server/test_semantics.py",
     "test": "npm run compile && npm run test:server",
     "package": "npm run prepare:pyright && vsce package --allow-missing-repository --out xonsh-language-support.vsix"
   },
@@ -137,6 +138,11 @@
           "default": "off",
           "description": "Trace communication between VS Code and the Xonsh language server."
         }
+      }
+    },
+    "configurationDefaults": {
+      "[xonsh]": {
+        "editor.semanticHighlighting.enabled": true
       }
     }
   }
