@@ -3,6 +3,10 @@
 VS Code language support for [Xonsh](https://xon.sh/) with Python analysis
 provided by Pyright.
 
+**Disclaimer:** Since I don't have the patience or time to create a VS code 
+extension properly, this project was entirely vibe coded. I make no guarantees 
+about reliability. 
+
 ## Features
 
 - Syntax highlighting for `.xsh`, `.xonshrc`, and Xonsh shebang files.
@@ -34,12 +38,10 @@ Backtick paths, environment variables, and captured subprocess expressions are
 currently lowered to `None`. More precise Xonsh runtime types will be added in
 later releases.
 
-## Development
-
-Run:
-
-```fish
-./build.fish
+## Installation
+In order to build and install this extension, clone this repo and run the following in its root directory. 
+```bash
+xonsh ./build.xsh
 ```
 
 The build writes `xonsh-language-support.vsix` to the repository root.
