@@ -3,9 +3,6 @@
 VS Code language support for [Xonsh](https://xon.sh/) with Python analysis
 provided by Pyright.
 
-**Disclaimer:** Since I don't have the patience or time to create a VS code 
-extension properly, this project was entirely vibe coded. I make no guarantees 
-about reliability. 
 
 ## Features
 
