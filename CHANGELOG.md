@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.4
+
+- Add the Xonsh extension icon.
+- Use the same icon for `.xsh`, `.xonshrc`, and other Xonsh language files.
+
 ## 0.1.3
 
 - Highlight shell command names and all shell arguments.
