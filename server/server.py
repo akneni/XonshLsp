@@ -311,7 +311,11 @@ class XonshLanguageServer:
             uri = message["params"]["textDocument"]["uri"]
             document = self.documents.get(uri)
             result = (
-                semantic_tokens(document.text, document.lowering.source)
+                semantic_tokens(
+                    document.text,
+                    document.lowering.source,
+                    document.lowering.command_lines,
+                )
                 if document
                 else {"data": []}
             )
@@ -332,7 +336,7 @@ class XonshLanguageServer:
             if method == "initialize":
                 forwarded["params"]["clientInfo"] = {
                     "name": "xonsh-lsp",
-                    "version": "0.1.2",
+                    "version": "0.1.3",
                 }
             self.pyright.write(forwarded)
             return

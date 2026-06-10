@@ -9,6 +9,8 @@ provided by Pyright.
 - Xonsh syntax diagnostics.
 - Pyright diagnostics, completion, hover, navigation, and type information for
   Python code in Xonsh files.
+- Semantic coloring for shell commands, arguments, pipelines, and subprocess
+  expressions.
 - Command and environment-variable completion.
 - Run File and Run Selection commands.
 

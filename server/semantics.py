@@ -32,6 +32,8 @@ TOKEN_TYPES = [
     "regexp",
     "operator",
     "decorator",
+    "xonshCommand",
+    "xonshArgument",
 ]
 TOKEN_MODIFIERS = [
     "declaration",
@@ -141,7 +143,263 @@ def _name_tokens(source: str) -> list[tokenize.TokenInfo]:
     return result
 
 
-def semantic_spans(original: str, lowered: str) -> list[SemanticSpan]:
+def _balanced_end(line: str, start: int, opening: str = "(", closing: str = ")") -> int:
+    depth = 0
+    quote: str | None = None
+    escaped = False
+    for index in range(start, len(line)):
+        character = line[index]
+        if quote:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+            continue
+        if character in {"'", '"'}:
+            quote = character
+        elif character == opening:
+            depth += 1
+        elif character == closing:
+            depth -= 1
+            if depth == 0:
+                return index + 1
+    return len(line)
+
+
+def _shell_spans(
+    line: str,
+    line_index: int,
+    start: int = 0,
+    end: int | None = None,
+) -> list[SemanticSpan]:
+    spans: list[SemanticSpan] = []
+    limit = len(line) if end is None else end
+    index = start
+    while index < limit and line[index].isspace():
+        index += 1
+    command_expected = True
+    control_operators = {"|", "|&", "||", "&&", ";"}
+    redirection_operators = {">", ">>", "<", "<<"}
+    all_operators = sorted(
+        control_operators | redirection_operators, key=len, reverse=True
+    )
+
+    while index < limit:
+        if line[index].isspace():
+            index += 1
+            continue
+        if line[index] == "#":
+            spans.append(
+                SemanticSpan(
+                    line_index,
+                    _utf16_column(line, index),
+                    _utf16_length(line[index:]),
+                    "comment",
+                )
+            )
+            break
+        if line.startswith("@(", index):
+            index = min(limit, _balanced_end(line, index + 1))
+            continue
+        subproc_marker = next(
+            (
+                marker
+                for marker in ("$(", "$[", "!(", "![")
+                if line.startswith(marker, index)
+            ),
+            None,
+        )
+        if subproc_marker:
+            opening = subproc_marker[1]
+            closing = ")" if opening == "(" else "]"
+            region_end = min(
+                limit,
+                _balanced_end(line, index + 1, opening, closing),
+            )
+            is_closed = region_end > index + 2 and line[region_end - 1] == closing
+            content_end = region_end - 1 if is_closed else region_end
+            spans.append(
+                SemanticSpan(
+                    line_index,
+                    _utf16_column(line, index),
+                    _utf16_length(subproc_marker),
+                    "operator",
+                )
+            )
+            spans.extend(
+                _shell_spans(line, line_index, index + 2, max(index + 2, content_end))
+            )
+            if is_closed:
+                spans.append(
+                    SemanticSpan(
+                        line_index,
+                        _utf16_column(line, region_end - 1),
+                        1,
+                        "operator",
+                    )
+                )
+            index = region_end
+            continue
+
+        operator = next(
+            (value for value in all_operators if line.startswith(value, index)),
+            None,
+        )
+        if operator:
+            spans.append(
+                SemanticSpan(
+                    line_index,
+                    _utf16_column(line, index),
+                    _utf16_length(operator),
+                    "operator",
+                )
+            )
+            if operator in control_operators:
+                command_expected = True
+            index += len(operator)
+            continue
+
+        start = index
+        quote: str | None = None
+        escaped = False
+        while index < limit:
+            character = line[index]
+            if quote:
+                if escaped:
+                    escaped = False
+                elif character == "\\":
+                    escaped = True
+                elif character == quote:
+                    quote = None
+                index += 1
+                continue
+            if character in {"'", '"'}:
+                quote = character
+                index += 1
+                continue
+            if character.isspace() or character == "#":
+                break
+            if line.startswith("@(", index):
+                break
+            if any(line.startswith(value, index) for value in all_operators):
+                break
+            index += 1
+
+        if start == index:
+            index += 1
+            continue
+        value = line[start:index]
+        token_type = "xonshCommand" if command_expected else "xonshArgument"
+        spans.append(
+            SemanticSpan(
+                line_index,
+                _utf16_column(line, start),
+                _utf16_length(value),
+                token_type,
+            )
+        )
+        if command_expected and "=" not in value:
+            command_expected = False
+    return spans
+
+
+def _embedded_subprocess_spans(line: str, line_index: int) -> list[SemanticSpan]:
+    spans: list[SemanticSpan] = []
+    index = 0
+    quote: str | None = None
+    escaped = False
+    while index < len(line):
+        character = line[index]
+        if quote:
+            if escaped:
+                escaped = False
+            elif character == "\\":
+                escaped = True
+            elif character == quote:
+                quote = None
+            index += 1
+            continue
+        if character in {"'", '"'}:
+            quote = character
+            index += 1
+            continue
+        marker = next(
+            (
+                value
+                for value in ("$(", "$[", "!(", "![")
+                if line.startswith(value, index)
+            ),
+            None,
+        )
+        if marker is None:
+            index += 1
+            continue
+        opening = marker[1]
+        closing = ")" if opening == "(" else "]"
+        region_end = _balanced_end(line, index + 1, opening, closing)
+        is_closed = region_end > index + 2 and line[region_end - 1] == closing
+        content_end = region_end - 1 if is_closed else region_end
+        spans.append(
+            SemanticSpan(
+                line_index,
+                _utf16_column(line, index),
+                _utf16_length(marker),
+                "operator",
+            )
+        )
+        spans.extend(
+            _shell_spans(line, line_index, index + 2, max(index + 2, content_end))
+        )
+        if is_closed:
+            spans.append(
+                SemanticSpan(
+                    line_index,
+                    _utf16_column(line, region_end - 1),
+                    1,
+                    "operator",
+                )
+            )
+        index = region_end
+    return spans
+
+
+def _remove_overlaps(spans: list[SemanticSpan]) -> list[SemanticSpan]:
+    priorities = {
+        "xonshCommand": 3,
+        "xonshArgument": 3,
+        "operator": 2,
+        "comment": 2,
+    }
+    ordered = sorted(
+        set(spans),
+        key=lambda span: (
+            span.line,
+            span.character,
+            -priorities.get(span.token_type, 1),
+            -span.length,
+        ),
+    )
+    result: list[SemanticSpan] = []
+    last_line = -1
+    last_end = -1
+    for span in ordered:
+        if span.line != last_line:
+            last_line = span.line
+            last_end = -1
+        if span.character < last_end:
+            continue
+        result.append(span)
+        last_end = span.character + span.length
+    return result
+
+
+def semantic_spans(
+    original: str,
+    lowered: str,
+    command_lines: frozenset[int] = frozenset(),
+) -> list[SemanticSpan]:
     symbols = _collect_symbols(lowered)
     original_lines = original.splitlines()
     lowered_tokens = _name_tokens(lowered)
@@ -196,7 +454,12 @@ def semantic_spans(original: str, lowered: str) -> list[SemanticSpan]:
                 modifiers=modifiers,
             )
         )
-    return spans
+    for line_index, line in enumerate(original_lines):
+        if line_index in command_lines:
+            spans.extend(_shell_spans(original_lines[line_index], line_index))
+        else:
+            spans.extend(_embedded_subprocess_spans(line, line_index))
+    return _remove_overlaps(spans)
 
 
 def encode_semantic_tokens(spans: list[SemanticSpan]) -> list[int]:
@@ -227,5 +490,13 @@ def encode_semantic_tokens(spans: list[SemanticSpan]) -> list[int]:
     return data
 
 
-def semantic_tokens(original: str, lowered: str) -> dict[str, list[int]]:
-    return {"data": encode_semantic_tokens(semantic_spans(original, lowered))}
+def semantic_tokens(
+    original: str,
+    lowered: str,
+    command_lines: frozenset[int] = frozenset(),
+) -> dict[str, list[int]]:
+    return {
+        "data": encode_semantic_tokens(
+            semantic_spans(original, lowered, command_lines)
+        )
+    }

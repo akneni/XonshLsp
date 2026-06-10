@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+- Highlight shell command names and all shell arguments.
+- Highlight commands after pipelines and control operators.
+- Preserve Python semantic highlighting inside `@(...)` command arguments.
+
 ## 0.1.2
 
 - Add semantic highlighting for Python modules, classes, functions, parameters,

@@ -2,7 +2,7 @@
   "name": "xonsh-language-support",
   "displayName": "Xonsh Language Support",
   "description": "Xonsh language support powered by Xonsh and Pyright.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "xonsh-lsp",
   "license": "MIT",
   "engines": {
@@ -82,6 +82,31 @@
         "path": "./syntaxes/xonsh.tmLanguage.json",
         "embeddedLanguages": {
           "meta.embedded.python.xonsh": "python"
+        }
+      }
+    ],
+    "semanticTokenTypes": [
+      {
+        "id": "xonshCommand",
+        "superType": "function",
+        "description": "A command executed by Xonsh."
+      },
+      {
+        "id": "xonshArgument",
+        "superType": "string",
+        "description": "An argument passed to a Xonsh command."
+      }
+    ],
+    "semanticTokenScopes": [
+      {
+        "language": "xonsh",
+        "scopes": {
+          "xonshCommand": [
+            "entity.name.function.command.xonsh"
+          ],
+          "xonshArgument": [
+            "string.unquoted.argument.xonsh"
+          ]
         }
       }
     ],
