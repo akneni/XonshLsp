@@ -13,16 +13,14 @@
     "xonsh": {
       "patterns": [
         {
-          "name": "meta.embedded.sql.xonsh",
+          "name": "string.quoted.multi.single.xonsh",
+          "contentName": "meta.embedded.sql.xonsh",
           "begin": "\\b(SQL)(\\s*)([fF])?(''')",
           "end": "'''",
           "beginCaptures": {
             "1": {
               "name": "entity.name.function.command.xonsh"
             },
-            "3": {
-              "name": "storage.modifier.string.xonsh"
-            },
             "4": {
               "name": "punctuation.definition.string.begin.xonsh"
             }
@@ -39,16 +37,14 @@
           ]
         },
         {
-          "name": "meta.embedded.sql.xonsh",
+          "name": "string.quoted.multi.double.xonsh",
+          "contentName": "meta.embedded.sql.xonsh",
           "begin": "\\b(SQL)(\\s*)([fF])?(\"\"\")",
           "end": "\"\"\"",
           "beginCaptures": {
             "1": {
               "name": "entity.name.function.command.xonsh"
             },
-            "3": {
-              "name": "storage.modifier.string.xonsh"
-            },
             "4": {
               "name": "punctuation.definition.string.begin.xonsh"
             }
@@ -65,16 +61,14 @@
           ]
         },
         {
-          "name": "meta.embedded.sql.xonsh",
+          "name": "string.quoted.single.xonsh",
+          "contentName": "meta.embedded.sql.xonsh",
           "begin": "\\b(SQL)(\\s*)([fF])?(')",
           "end": "(?<!\\\\)'(?=\\s*(?:$|[|&;<>]))",
           "beginCaptures": {
             "1": {
               "name": "entity.name.function.command.xonsh"
             },
-            "3": {
-              "name": "storage.modifier.string.xonsh"
-            },
             "4": {
               "name": "punctuation.definition.string.begin.xonsh"
             }
@@ -91,15 +85,13 @@
           ]
         },
         {
-          "name": "meta.embedded.sql.xonsh",
+          "name": "string.quoted.double.xonsh",
+          "contentName": "meta.embedded.sql.xonsh",
           "begin": "\\b(SQL)(\\s*)([fF])?(\")",
           "end": "(?<!\\\\)\"(?=\\s*(?:$|[|&;<>]))",
           "beginCaptures": {
             "1": {
               "name": "entity.name.function.command.xonsh"
-            },
-            "3": {
-              "name": "storage.modifier.string.xonsh"
             },
             "4": {
               "name": "punctuation.definition.string.begin.xonsh"

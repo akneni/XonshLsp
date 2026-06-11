@@ -53,6 +53,37 @@ class LoweringTests(unittest.TestCase):
                 self.assertNotIn("select", lowered)
                 self.assertNotIn(quotes, lowered)
 
+    def test_masks_commands_after_multiline_f_string(self) -> None:
+        source = (
+            'SQL f"""\n'
+            "select * from emp;\n"
+            '"""\n'
+            "SQL 'select * from emp'\n"
+            "git --version\n"
+        )
+        lowered = self.assert_valid_lowering(source)
+        self.assertEqual(
+            lower_xonsh(source).command_lines,
+            frozenset({0, 1, 2, 3, 4}),
+        )
+        self.assertNotIn("SQL 'select", lowered)
+        self.assertNotIn("git --version", lowered)
+
+    def test_masks_repeated_commands_after_multiline_f_string(self) -> None:
+        source = (
+            'SQL f"""\n'
+            "select * from emp;\n"
+            '"""\n'
+            "\n"
+            'SQL "commit"\n'
+            'SQL "rollback"\n'
+        )
+        self.assert_valid_lowering(source)
+        self.assertEqual(
+            lower_xonsh(source).command_lines,
+            frozenset({0, 1, 2, 4, 5}),
+        )
+
     def test_missing_end_lineno_does_not_crash(self) -> None:
         command = ast.Expr(
             value=ast.Call(

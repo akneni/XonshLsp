@@ -21,6 +21,38 @@ class LoweringResult:
     command_lines: frozenset[int]
 
 
+def _command_name(node: ast.AST) -> str | None:
+    for child in ast.walk(node):
+        if (
+            isinstance(child, ast.Constant)
+            and isinstance(child.value, str)
+            and re.fullmatch(r"[A-Za-z_][\w.-]*", child.value)
+        ):
+            return child.value
+    return None
+
+
+def _source_command_start(
+    lines: list[str],
+    reported_start: int,
+    command_name: str | None,
+    claimed_lines: set[int],
+) -> int:
+    if command_name is None:
+        return reported_start
+
+    candidates: list[int] = []
+    for index, line in enumerate(lines):
+        if index in claimed_lines:
+            continue
+        match = re.match(r"\s*([A-Za-z_][\w.-]*)", line)
+        if match and match.group(1) == command_name:
+            candidates.append(index)
+    if not candidates:
+        return reported_start
+    return min(candidates, key=lambda index: (abs(index - reported_start), index))
+
+
 def _xonsh_command_lines(source: str, filename: str) -> set[int]:
     try:
         try:
@@ -36,6 +68,7 @@ def _xonsh_command_lines(source: str, filename: str) -> set[int]:
         command_lines: set[int] = set()
         if tree is None:
             return command_lines
+        lines = source.splitlines()
 
         for node in ast.walk(tree):
             if not isinstance(node, ast.Expr) or not isinstance(node.value, ast.Call):
@@ -53,8 +86,14 @@ def _xonsh_command_lines(source: str, filename: str) -> set[int]:
                     )
                     for child in ast.walk(node)
                 )
-                start = max(0, lineno - 1)
-                end = max(start, end_lineno - 1)
+                reported_start = max(0, lineno - 1)
+                start = _source_command_start(
+                    lines,
+                    reported_start,
+                    _command_name(node),
+                    command_lines,
+                )
+                end = max(start, start + end_lineno - lineno)
                 command_lines.update(range(start, end + 1))
         return command_lines
     except Exception:

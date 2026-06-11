@@ -17,6 +17,13 @@ class SqlGrammarTests(unittest.TestCase):
         patterns = grammar["repository"]["xonsh"]["patterns"][:4]
         begin_patterns = [re.compile(pattern["begin"]) for pattern in patterns]
 
+        for pattern in patterns:
+            self.assertTrue(pattern["name"].startswith("string.quoted."))
+            self.assertEqual(
+                pattern["contentName"],
+                "meta.embedded.sql.xonsh",
+            )
+
         for source in (
             "SQL 'select 1'",
             'SQL "select 1"',

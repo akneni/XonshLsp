@@ -51,12 +51,20 @@ def _text_in_range(text: str, range_: Json) -> str:
 
 
 def filter_pyright_diagnostics(text: str, diagnostics: list[Json]) -> list[Json]:
+    aliases_messages = {
+        '"aliases" is not defined',
+        "'aliases' is not defined",
+    }
+
     return [
         diagnostic
         for diagnostic in diagnostics
         if not (
-            diagnostic.get("code") == "reportUndefinedVariable"
-            and _text_in_range(text, diagnostic.get("range", {})) == "aliases"
+            (
+                diagnostic.get("code") == "reportUndefinedVariable"
+                and _text_in_range(text, diagnostic.get("range", {})) == "aliases"
+            )
+            or diagnostic.get("message") in aliases_messages
         )
     ]
 
@@ -361,7 +369,7 @@ class XonshLanguageServer:
             if method == "initialize":
                 forwarded["params"]["clientInfo"] = {
                     "name": "xonsh-lsp",
-                    "version": "0.1.9",
+                    "version": "0.1.11",
                 }
             self.pyright.write(forwarded)
             return

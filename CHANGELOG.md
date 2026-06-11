@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.11
+
+- Correct shifted Xonsh AST locations after multiline f-string commands so
+  consecutive SQL and shell commands are fully lowered.
+
+## 0.1.10
+
+- Suppress the built-in `aliases` undefined warning even when Pyright omits
+  diagnostic metadata.
+- Apply normal string coloring to SQL text and delimiters while retaining SQL
+  keyword highlighting.
+
 ## 0.1.9
 
 - Highlight SQL in `f`-prefixed single-, double-, and triple-quoted arguments

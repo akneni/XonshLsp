@@ -44,6 +44,7 @@ class DiagnosticFilterTests(unittest.TestCase):
             6,
             code="reportUnknownArgumentType",
         )
+        item["message"] = 'Argument type for "aliases" is unknown'
         self.assertEqual(filter_pyright_diagnostics(text, [item]), [item])
 
     def test_handles_utf16_columns(self) -> None:
@@ -54,6 +55,22 @@ class DiagnosticFilterTests(unittest.TestCase):
             filter_pyright_diagnostics(text, [aliases, missing]),
             [missing],
         )
+
+    def test_filters_aliases_when_code_or_range_is_missing(self) -> None:
+        text = "aliases['SQL'] = SQL\n"
+        item = diagnostic("aliases", 0, 0)
+        item.pop("code")
+        item["range"] = {
+            "start": {"line": 0, "character": 1},
+            "end": {"line": 0, "character": 1},
+        }
+        self.assertEqual(filter_pyright_diagnostics(text, [item]), [])
+
+    def test_preserves_other_undefined_messages_without_code(self) -> None:
+        text = "print(missing_name)\n"
+        item = diagnostic("missing_name", 0, 6)
+        item.pop("code")
+        self.assertEqual(filter_pyright_diagnostics(text, [item]), [item])
 
 
 if __name__ == "__main__":
