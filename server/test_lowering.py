@@ -56,14 +56,8 @@ class LoweringTests(unittest.TestCase):
         command.lineno = 3
         command.end_lineno = None
 
-        class FakeExecer:
-            def __init__(self, **_: object) -> None:
-                pass
-
-            def parse(self, *_: object, **__: object) -> ast.Module:
-                return ast.Module(body=[command], type_ignores=[])
-
-        with patch("xonsh.execer.Execer", FakeExecer):
+        tree = ast.Module(body=[command], type_ignores=[])
+        with patch("server.xonsh_parser.parse_xonsh", return_value=tree):
             self.assertEqual(_xonsh_command_lines("echo hi\n", "test.xsh"), {2})
 
 

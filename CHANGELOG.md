@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+- Initialize Xonsh's global parser session for parser recovery helpers.
+- Reuse and serialize one parser instance instead of constructing one per edit.
+- Keep internal parser failures in the server log rather than showing a
+  misleading warning on the first line.
+
 ## 0.1.4
 
 - Add the Xonsh extension icon.

@@ -14,6 +14,7 @@ from typing import Any, BinaryIO
 
 from lowering import LoweringResult, lower_xonsh
 from semantics import TOKEN_MODIFIERS, TOKEN_TYPES, semantic_tokens
+from xonsh_parser import compile_xonsh
 
 
 Json = dict[str, Any]
@@ -117,28 +118,11 @@ class XonshLanguageServer:
 
     def _xonsh_diagnostics(self, text: str, uri: str) -> list[Json]:
         try:
-            from xonsh.execer import Execer
-
-            Execer(filename=uri, scriptcache=False, cacheall=False).compile(
-                text,
-                glbs={},
-                locs={},
-                filename=uri,
-            )
+            compile_xonsh(text, uri)
         except SyntaxError as error:
             return [self._diagnostic(error)]
         except Exception as error:
-            return [
-                {
-                    "range": {
-                        "start": {"line": 0, "character": 0},
-                        "end": {"line": 0, "character": 1},
-                    },
-                    "severity": 2,
-                    "source": "xonsh",
-                    "message": f"Xonsh parser failed: {error}",
-                }
-            ]
+            print(f"Xonsh parser failed for {uri}: {error}", file=sys.stderr)
         return []
 
     def _publish_diagnostics(self, document: Document) -> None:
@@ -336,7 +320,7 @@ class XonshLanguageServer:
             if method == "initialize":
                 forwarded["params"]["clientInfo"] = {
                     "name": "xonsh-lsp",
-                    "version": "0.1.3",
+                    "version": "0.1.5",
                 }
             self.pyright.write(forwarded)
             return

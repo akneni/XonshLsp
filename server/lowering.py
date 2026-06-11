@@ -23,13 +23,12 @@ class LoweringResult:
 
 def _xonsh_command_lines(source: str, filename: str) -> set[int]:
     try:
-        from xonsh.execer import Execer
+        try:
+            from .xonsh_parser import parse_xonsh
+        except ImportError:
+            from xonsh_parser import parse_xonsh
 
-        tree = Execer(filename=filename, scriptcache=False, cacheall=False).parse(
-            source,
-            ctx=set(dir(__builtins__)),
-            filename=filename,
-        )
+        tree = parse_xonsh(source, filename)
     except Exception:
         return set()
 
