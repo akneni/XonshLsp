@@ -133,6 +133,38 @@ class SemanticTokenTests(unittest.TestCase):
         )
         self.assertEqual(value.character, 13)
 
+    def test_sql_arguments_are_left_to_embedded_grammar(self) -> None:
+        source = (
+            "SQL 'insert into emp values (23, ''sd'');'\n"
+            'SQL "commit"\n'
+            "SQL '''select *\nfrom emp;\n'''\n"
+            'SQL """select count(*)\nfrom emp;\n"""\n'
+            "SQL f'select * from {table};'\n"
+            'SQL f"select * from {table};"\n'
+            "SQL f'''select *\nfrom {table};\n'''\n"
+            'SQL f"""select count(*)\nfrom {table};\n"""\n'
+        )
+        lowering = lower_xonsh(source)
+        spans = semantic_spans(source, lowering.source, lowering.command_lines)
+        classified = [
+            (
+                span.token_type,
+                source.splitlines()[span.line][
+                    span.character : span.character + span.length
+                ],
+            )
+            for span in spans
+            if span.token_type.startswith("xonsh")
+        ]
+        self.assertEqual(
+            [value for token_type, value in classified if token_type == "xonshCommand"],
+            ["SQL"] * 8,
+        )
+        self.assertFalse(
+            any(token_type == "xonshArgument" for token_type, _ in classified)
+        )
+        self.assertTrue(all(span.token_type == "xonshCommand" for span in spans))
+
 
 if __name__ == "__main__":
     unittest.main()

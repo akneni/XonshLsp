@@ -45,7 +45,14 @@ def _xonsh_command_lines(source: str, filename: str) -> set[int]:
                 continue
             if func.attr.startswith(_SUBPROC_METHOD_PREFIXES):
                 lineno = getattr(node, "lineno", None) or 1
-                end_lineno = getattr(node, "end_lineno", None) or lineno
+                end_lineno = max(
+                    (
+                        getattr(child, "end_lineno", None)
+                        or getattr(child, "lineno", None)
+                        or lineno
+                    )
+                    for child in ast.walk(node)
+                )
                 start = max(0, lineno - 1)
                 end = max(start, end_lineno - 1)
                 command_lines.update(range(start, end + 1))
@@ -165,7 +172,8 @@ def _lower_command_line(line: str) -> str:
 
     indent = len(body) - len(body.lstrip())
     chars = [" "] * len(body)
-    prefix = " " * indent + "pass"
+    available = len(body) - indent
+    prefix = " " * indent + ("pass" if available >= 4 else "")
     chars[: len(prefix)] = prefix
 
     expressions = _at_expressions(body)

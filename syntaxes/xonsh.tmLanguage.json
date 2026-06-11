@@ -13,6 +13,110 @@
     "xonsh": {
       "patterns": [
         {
+          "name": "meta.embedded.sql.xonsh",
+          "begin": "\\b(SQL)(\\s*)([fF])?(''')",
+          "end": "'''",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.command.xonsh"
+            },
+            "3": {
+              "name": "storage.modifier.string.xonsh"
+            },
+            "4": {
+              "name": "punctuation.definition.string.begin.xonsh"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.xonsh"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.sql"
+            }
+          ]
+        },
+        {
+          "name": "meta.embedded.sql.xonsh",
+          "begin": "\\b(SQL)(\\s*)([fF])?(\"\"\")",
+          "end": "\"\"\"",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.command.xonsh"
+            },
+            "3": {
+              "name": "storage.modifier.string.xonsh"
+            },
+            "4": {
+              "name": "punctuation.definition.string.begin.xonsh"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.xonsh"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.sql"
+            }
+          ]
+        },
+        {
+          "name": "meta.embedded.sql.xonsh",
+          "begin": "\\b(SQL)(\\s*)([fF])?(')",
+          "end": "(?<!\\\\)'(?=\\s*(?:$|[|&;<>]))",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.command.xonsh"
+            },
+            "3": {
+              "name": "storage.modifier.string.xonsh"
+            },
+            "4": {
+              "name": "punctuation.definition.string.begin.xonsh"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.xonsh"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.sql"
+            }
+          ]
+        },
+        {
+          "name": "meta.embedded.sql.xonsh",
+          "begin": "\\b(SQL)(\\s*)([fF])?(\")",
+          "end": "(?<!\\\\)\"(?=\\s*(?:$|[|&;<>]))",
+          "beginCaptures": {
+            "1": {
+              "name": "entity.name.function.command.xonsh"
+            },
+            "3": {
+              "name": "storage.modifier.string.xonsh"
+            },
+            "4": {
+              "name": "punctuation.definition.string.begin.xonsh"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.xonsh"
+            }
+          },
+          "patterns": [
+            {
+              "include": "source.sql"
+            }
+          ]
+        },
+        {
           "name": "variable.other.environment.xonsh",
           "match": "\\$[A-Za-z_][A-Za-z0-9_]*"
         },

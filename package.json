@@ -2,7 +2,7 @@
   "name": "xonsh-language-support",
   "displayName": "Xonsh Language Support",
   "description": "Xonsh language support powered by Xonsh and Pyright.",
-  "version": "0.1.5",
+  "version": "0.1.9",
   "publisher": "xonsh-lsp",
   "license": "MIT",
   "icon": "images/xonsh.png",
@@ -44,7 +44,7 @@
     "clean": "rm -rf dist",
     "compile": "tsc --noEmit && esbuild extension/src/extension.ts --bundle --platform=node --format=cjs --external:vscode --outfile=dist/extension.js",
     "prepare:pyright": "node scripts/prepare-pyright.mjs",
-    "test:server": "python -m unittest -v server/test_lowering.py server/test_semantics.py server/test_xonsh_parser.py",
+    "test:server": "python -m unittest -v server/test_lowering.py server/test_semantics.py server/test_xonsh_parser.py server/test_diagnostics.py server/test_grammar.py",
     "test": "npm run compile && npm run test:server",
     "package": "npm run prepare:pyright && vsce package --allow-missing-repository --out xonsh-language-support.vsix"
   },
@@ -88,7 +88,8 @@
         "scopeName": "source.xonsh",
         "path": "./syntaxes/xonsh.tmLanguage.json",
         "embeddedLanguages": {
-          "meta.embedded.python.xonsh": "python"
+          "meta.embedded.python.xonsh": "python",
+          "meta.embedded.sql.xonsh": "sql"
         }
       }
     ],

@@ -41,6 +41,18 @@ class LoweringTests(unittest.TestCase):
         self.assertIn("    pass;", lowered)
         self.assertEqual(source.index("name.upper()"), lowered.index("name.upper()"))
 
+    def test_masks_multiline_command_string(self) -> None:
+        for quotes in ('"""', "'''"):
+            with self.subTest(quotes=quotes):
+                source = f"SQL {quotes}\nselect * from emp;\n{quotes}\n"
+                lowered = self.assert_valid_lowering(source)
+                self.assertEqual(
+                    lower_xonsh(source).command_lines,
+                    frozenset({0, 1, 2}),
+                )
+                self.assertNotIn("select", lowered)
+                self.assertNotIn(quotes, lowered)
+
     def test_missing_end_lineno_does_not_crash(self) -> None:
         command = ast.Expr(
             value=ast.Call(

@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import io
 import keyword
+import re
 import token
 import tokenize
 from dataclasses import dataclass
@@ -395,6 +396,66 @@ def _remove_overlaps(spans: list[SemanticSpan]) -> list[SemanticSpan]:
     return result
 
 
+def _sql_ranges(lines: list[str]) -> dict[int, list[tuple[int, int]]]:
+    ranges: dict[int, list[tuple[int, int]]] = {}
+    active_triple: str | None = None
+
+    for line_index, line in enumerate(lines):
+        if active_triple is not None:
+            closing = line.find(active_triple)
+            end = len(line) if closing < 0 else closing + len(active_triple)
+            ranges.setdefault(line_index, []).append(
+                (0, _utf16_column(line, end))
+            )
+            if closing >= 0:
+                active_triple = None
+            continue
+
+        match = re.match(
+            r"^\s*SQL\s+(?P<prefix>[fF]?)(?P<quote>'''|\"\"\"|'|\")",
+            line,
+        )
+        if match is None:
+            continue
+        quote = match.group("quote")
+        start = match.start("prefix")
+        if len(quote) == 3:
+            closing = line.find(quote, match.end("quote"))
+            end = len(line) if closing < 0 else closing + len(quote)
+            ranges.setdefault(line_index, []).append(
+                (_utf16_column(line, start), _utf16_column(line, end))
+            )
+            if closing < 0:
+                active_triple = quote
+        else:
+            closing = line.rfind(quote)
+            end = len(line) if closing <= start else closing + 1
+            ranges.setdefault(line_index, []).append(
+                (_utf16_column(line, start), _utf16_column(line, end))
+            )
+    return ranges
+
+
+def _outside_sql_ranges(
+    spans: list[SemanticSpan],
+    lines: list[str],
+) -> list[SemanticSpan]:
+    sql_ranges = _sql_ranges(lines)
+    if not sql_ranges:
+        return spans
+
+    result: list[SemanticSpan] = []
+    for span in spans:
+        ranges = sql_ranges.get(span.line, ())
+        if any(
+            span.character < end and span.character + span.length > start
+            for start, end in ranges
+        ):
+            continue
+        result.append(span)
+    return result
+
+
 def semantic_spans(
     original: str,
     lowered: str,
@@ -459,7 +520,7 @@ def semantic_spans(
             spans.extend(_shell_spans(original_lines[line_index], line_index))
         else:
             spans.extend(_embedded_subprocess_spans(line, line_index))
-    return _remove_overlaps(spans)
+    return _remove_overlaps(_outside_sql_ranges(spans, original_lines))
 
 
 def encode_semantic_tokens(spans: list[SemanticSpan]) -> list[int]:

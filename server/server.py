@@ -12,12 +12,53 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, BinaryIO
 
-from lowering import LoweringResult, lower_xonsh
-from semantics import TOKEN_MODIFIERS, TOKEN_TYPES, semantic_tokens
-from xonsh_parser import compile_xonsh
+try:
+    from .lowering import LoweringResult, lower_xonsh
+    from .semantics import TOKEN_MODIFIERS, TOKEN_TYPES, semantic_tokens
+    from .xonsh_parser import compile_xonsh
+except ImportError:
+    from lowering import LoweringResult, lower_xonsh
+    from semantics import TOKEN_MODIFIERS, TOKEN_TYPES, semantic_tokens
+    from xonsh_parser import compile_xonsh
 
 
 Json = dict[str, Any]
+
+
+def _utf16_offset_to_index(text: str, offset: int) -> int:
+    if offset <= 0:
+        return 0
+    units = 0
+    for index, character in enumerate(text):
+        units += len(character.encode("utf-16-le")) // 2
+        if units >= offset:
+            return index + 1
+    return len(text)
+
+
+def _text_in_range(text: str, range_: Json) -> str:
+    lines = text.splitlines()
+    start = range_.get("start", {})
+    end = range_.get("end", {})
+    start_line = start.get("line", -1)
+    end_line = end.get("line", -1)
+    if start_line != end_line or not 0 <= start_line < len(lines):
+        return ""
+    line = lines[start_line]
+    start_index = _utf16_offset_to_index(line, start.get("character", 0))
+    end_index = _utf16_offset_to_index(line, end.get("character", 0))
+    return line[start_index:end_index]
+
+
+def filter_pyright_diagnostics(text: str, diagnostics: list[Json]) -> list[Json]:
+    return [
+        diagnostic
+        for diagnostic in diagnostics
+        if not (
+            diagnostic.get("code") == "reportUndefinedVariable"
+            and _text_in_range(text, diagnostic.get("range", {})) == "aliases"
+        )
+    ]
 
 
 class JsonRpcStream:
@@ -320,7 +361,7 @@ class XonshLanguageServer:
             if method == "initialize":
                 forwarded["params"]["clientInfo"] = {
                     "name": "xonsh-lsp",
-                    "version": "0.1.5",
+                    "version": "0.1.9",
                 }
             self.pyright.write(forwarded)
             return
@@ -338,8 +379,11 @@ class XonshLanguageServer:
             uri = self.python_to_xonsh.get(python_uri)
             if uri and uri in self.documents:
                 document = self.documents[uri]
-                document.pyright_diagnostics = self._map_to_xonsh(
-                    message["params"].get("diagnostics", [])
+                document.pyright_diagnostics = filter_pyright_diagnostics(
+                    document.text,
+                    self._map_to_xonsh(
+                        message["params"].get("diagnostics", [])
+                    ),
                 )
                 self._publish_diagnostics(document)
             return

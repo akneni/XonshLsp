@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.9
+
+- Highlight SQL in `f`-prefixed single-, double-, and triple-quoted arguments
+  to the `SQL` command.
+
+## 0.1.8
+
+- Lower complete multiline Xonsh command arguments so triple-quoted SQL does
+  not produce false Python syntax diagnostics.
+
+## 0.1.7
+
+- Suppress Pyright's undefined-variable diagnostic for Xonsh's built-in
+  `aliases` object without suppressing other undefined names.
+
+## 0.1.6
+
+- Embed SQL syntax highlighting in quoted arguments to the `SQL` command.
+- Support single, double, and multiline triple-quoted SQL strings.
+
 ## 0.1.5
 
 - Initialize Xonsh's global parser session for parser recovery helpers.

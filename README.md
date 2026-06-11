@@ -12,6 +12,8 @@ provided by Pyright.
   Python code in Xonsh files.
 - Semantic coloring for shell commands, arguments, pipelines, and subprocess
   expressions.
+- Embedded SQL highlighting for plain and `f`-prefixed single-, double-, and
+  triple-quoted arguments to the `SQL` command.
 - Command and environment-variable completion.
 - Run File and Run Selection commands.
 
